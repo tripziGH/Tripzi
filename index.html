@@ -122,6 +122,40 @@
       background: #075dcc;
     }
 
+    .search-btn:disabled {
+      opacity: 0.7;
+      cursor: wait;
+    }
+
+    .results {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .flight-card {
+      background: white;
+      border-radius: 15px;
+      padding: 22px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    .flight-card h2 {
+      margin-bottom: 10px;
+    }
+
+    .flight-card p {
+      margin: 7px 0;
+    }
+
+    .route {
+      font-size: 22px;
+      font-weight: bold;
+      color: #1677ff;
+      margin: 10px 0;
+    }
+
     .popular {
       padding: 55px 7%;
       text-align: center;
@@ -210,41 +244,59 @@
     </nav>
   </header>
 
+
   <section class="hero">
     <h1>Where will you go next?</h1>
     <p>Search flights and start your next adventure with Tripzi.</p>
   </section>
 
+
   <section class="booking-box">
 
     <div class="trip-types">
+
       <label>
-        <input type="radio" name="trip" checked>
+        <input type="radio" name="trip" value="round" checked>
         Round Trip
       </label>
 
       <label>
-        <input type="radio" name="trip">
+        <input type="radio" name="trip" value="oneway">
         One Way
       </label>
+
     </div>
+
 
     <div class="fields">
 
       <div class="field">
         <label>From</label>
-        <input type="text" id="from" placeholder="City or airport">
+        <input
+          type="text"
+          id="from"
+          placeholder="City or airport"
+          autocomplete="off"
+        >
       </div>
+
 
       <div class="field">
         <label>To</label>
-        <input type="text" id="to" placeholder="City or airport">
+        <input
+          type="text"
+          id="to"
+          placeholder="City or airport"
+          autocomplete="off"
+        >
       </div>
+
 
       <div class="field">
         <label>Departure</label>
         <input type="date" id="departure">
       </div>
+
 
       <div class="field">
         <label>Return</label>
@@ -253,22 +305,37 @@
 
     </div>
 
+
     <div class="field" style="margin-top: 12px;">
+
       <label>Passengers</label>
+
       <select id="passengers">
-        <option>1 Adult</option>
-        <option>2 Adults</option>
-        <option>3 Adults</option>
-        <option>4 Adults</option>
-        <option>5 Adults</option>
+
+        <option value="1">1 Adult</option>
+        <option value="2">2 Adults</option>
+        <option value="3">3 Adults</option>
+        <option value="4">4 Adults</option>
+        <option value="5">5 Adults</option>
+
       </select>
+
     </div>
 
-    <button class="search-btn" onclick="searchFlights()">
+
+    <button
+      class="search-btn"
+      id="searchButton"
+      onclick="searchFlights()"
+    >
       🔎 Search Flights
     </button>
 
   </section>
+
+
+  <section id="results" class="results"></section>
+
 
   <section class="popular">
 
@@ -282,11 +349,13 @@
         <p>Discover the Philippines</p>
       </div>
 
+
       <div class="destination">
         <div class="icon">🗼</div>
         <h3>Tokyo</h3>
         <p>Experience Japan</p>
       </div>
+
 
       <div class="destination">
         <div class="icon">🗽</div>
@@ -298,31 +367,337 @@
 
   </section>
 
+
   <footer>
     <p>© 2026 Tripzi. Your journey starts here. ✈️</p>
   </footer>
 
+
   <script>
-    function searchFlights() {
 
-      const from = document.getElementById("from").value;
-      const to = document.getElementById("to").value;
-      const departure = document.getElementById("departure").value;
+    /*
+      Tripzi airport code database
+    */
 
-      if (from === "" || to === "" || departure === "") {
-        alert("Please enter your departure city, destination, and departure date.");
-        return;
+    const airportCodes = {
+
+      "davao": "DVO",
+      "davao city": "DVO",
+      "dvo": "DVO",
+
+      "manila": "MNL",
+      "mnl": "MNL",
+
+      "cebu": "CEB",
+      "cebu city": "CEB",
+      "ceb": "CEB",
+
+      "clark": "CRK",
+      "clark international": "CRK",
+      "crk": "CRK",
+
+      "iloilo": "ILO",
+      "iloilo city": "ILO",
+      "ilo": "ILO",
+
+      "boracay": "MPH",
+      "caticlan": "MPH",
+      "mph": "MPH",
+
+      "puerto princesa": "PPS",
+      "pps": "PPS",
+
+      "bohol": "TAG",
+      "tagbilaran": "TAG",
+      "tag": "TAG",
+
+      "tokyo": "TYO",
+      "tyo": "TYO",
+
+      "osaka": "OSA",
+      "osa": "OSA",
+
+      "seoul": "SEL",
+      "sel": "SEL",
+
+      "singapore": "SIN",
+      "sin": "SIN",
+
+      "bangkok": "BKK",
+      "bkk": "BKK",
+
+      "hong kong": "HKG",
+      "hkg": "HKG",
+
+      "taipei": "TPE",
+      "tpe": "TPE",
+
+      "new york": "NYC",
+      "nyc": "NYC",
+
+      "los angeles": "LAX",
+      "lax": "LAX",
+
+      "san francisco": "SFO",
+      "sfo": "SFO",
+
+      "london": "LON",
+      "lon": "LON",
+
+      "paris": "PAR",
+      "par": "PAR",
+
+      "dubai": "DXB",
+      "dxb": "DXB"
+
+    };
+
+
+    /*
+      Convert city name to airport code
+    */
+
+    function getAirportCode(value) {
+
+      const cleaned = value.trim().toLowerCase();
+
+      if (airportCodes[cleaned]) {
+        return airportCodes[cleaned];
       }
 
-      alert(
-        "Searching flights from " +
-        from +
-        " to " +
-        to +
-        "..."
-      );
+      /*
+        If the user already entered an airport code,
+        keep it.
+      */
+
+      return value.trim().toUpperCase();
+
     }
+
+
+    /*
+      Search flights
+    */
+
+    async function searchFlights() {
+
+      const fromInput =
+        document.getElementById("from").value;
+
+      const toInput =
+        document.getElementById("to").value;
+
+      const departure =
+        document.getElementById("departure").value;
+
+      const returnDate =
+        document.getElementById("return").value;
+
+      const passengers =
+        document.getElementById("passengers").value;
+
+      const button =
+        document.getElementById("searchButton");
+
+      const results =
+        document.getElementById("results");
+
+
+      /*
+        Validate required fields
+      */
+
+      if (
+        !fromInput.trim() ||
+        !toInput.trim() ||
+        !departure
+      ) {
+
+        alert(
+          "Please enter your departure city, destination, and departure date."
+        );
+
+        return;
+
+      }
+
+
+      /*
+        Convert cities to IATA codes
+      */
+
+      const from =
+        getAirportCode(fromInput);
+
+      const to =
+        getAirportCode(toInput);
+
+
+      /*
+        Show what Tripzi is actually sending
+      */
+
+      results.innerHTML = `
+        <div class="flight-card">
+
+          <h2>🔎 Searching Flights</h2>
+
+          <div class="route">
+            ${from} → ${to}
+          </div>
+
+          <p>
+            Searching flights from
+            <strong>${from}</strong>
+            to
+            <strong>${to}</strong>
+          </p>
+
+          <p>
+            Departure:
+            <strong>${departure}</strong>
+          </p>
+
+        </div>
+      `;
+
+
+      button.disabled = true;
+      button.textContent = "🔎 Searching...";
+
+
+      try {
+
+        /*
+          Send the airport codes to the Vercel API
+        */
+
+        const response = await fetch(
+          "/api/search",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+              from: from,
+
+              to: to,
+
+              departure: departure,
+
+              returnDate: returnDate,
+
+              passengers: passengers
+
+            })
+
+          }
+        );
+
+
+        /*
+          Try to read API response
+        */
+
+        const data =
+          await response.json();
+
+
+        /*
+          API returned an error
+        */
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.error ||
+            "Flight search failed."
+          );
+
+        }
+
+
+        /*
+          Display successful response
+        */
+
+        results.innerHTML = `
+
+          <div class="flight-card">
+
+            <h2>✈️ Flight Results</h2>
+
+            <div class="route">
+              ${from} → ${to}
+            </div>
+
+            <p>
+              Departure:
+              <strong>${departure}</strong>
+            </p>
+
+            <p>
+              Flight search completed successfully.
+            </p>
+
+            <p>
+              The API returned flight data.
+            </p>
+
+          </div>
+
+        `;
+
+
+        console.log(
+          "Tripzi flight results:",
+          data
+        );
+
+
+      } catch (error) {
+
+        /*
+          Display error instead of silently failing
+        */
+
+        console.error(
+          "Tripzi search error:",
+          error
+        );
+
+
+        results.innerHTML = `
+
+          <div class="flight-card">
+
+            <h2>❌ Flight Search Error</h2>
+
+            <div class="route">
+              ${from} → ${to}
+            </div>
+
+            <p>
+              ${error.message}
+            </p>
+
+          </div>
+
+        `;
+
+      }
+
+
+      button.disabled = false;
+      button.textContent = "🔎 Search Flights";
+
+    }
+
   </script>
 
 </body>
-  </html>
+</html>
